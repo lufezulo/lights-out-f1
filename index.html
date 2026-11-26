@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lights Out · F1</title>
+<link rel="stylesheet" href="css/styles.css">
+
+</head>
+<body>
+<div id="boot" aria-hidden="true">
+  <div class="bt-in">
+    <b class="bt-mark">LIGHTS <i>OUT</i></b>
+    <div class="bt-gantry"><span><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span></div>
+    <p class="bt-txt"><span class="bt-a">Preparando motores…</span><span class="bt-b">¡Luces fuera!</span></p>
+    <div class="bt-rev"><i></i></div>
+  </div>
+</div>
+<script>(function(){var en;try{var l=localStorage.getItem("lo-lang");en=l?l==="en":!/^es\b/i.test(navigator.language||"es")}catch(e){en=false}
+if(en){var b=document.getElementById("boot");b.querySelector(".bt-a").textContent="Warming up engines…";b.querySelector(".bt-b").textContent="Lights out!"}
+var t0=Date.now(),ready=false,gone=false;
+function out(){if(gone)return;gone=true;var b=document.getElementById("boot");b.classList.add("off");setTimeout(function(){b.classList.add("bye")},380);setTimeout(function(){b.remove()},900)}
+function tryOut(){if(ready&&Date.now()-t0>=2200)out()}
+window.bootReady=function(){ready=true;tryOut()};
+setInterval(tryOut,100);setTimeout(function(){ready=true;tryOut()},6000);})();</script>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#inicio" aria-label="Lights Out, inicio"><b>LIGHTS <i>OUT</i></b><span class="lights on" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></a>
+    <nav class="tabs" aria-label="Secciones">
+      <a href="#inicio" data-v="inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.2C4 9.3 8.2 5 13.4 5 17.6 5 20.5 8 20.5 12.2v2.6a2 2 0 0 1-2 2h-5.6l-1.4 1.8a1.5 1.5 0 0 1-1.2.6H6.6A2.6 2.6 0 0 1 4 16.6z"/><path d="M11.8 10.2h8.5M11.8 10.2c-.4 1.4-.2 2.7.6 3.9h8"/></svg>Inicio</a>
+      <a href="#carreras" data-v="carreras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 20.5V4"/><rect x="5.5" y="4.5" width="13.5" height="9" rx="2"/><path d="M7.5 4.5h2.5V9H5.5V6.5a2 2 0 0 1 2-2zM14.5 4.5H17a2 2 0 0 1 2 2V9h-4.5zM10 9h4.5v4.5H10z" fill="currentColor" stroke="none"/></svg>Carreras</a>
+      <a href="#parrilla" data-v="parrilla"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5C4 7 5.8 5.5 8 5.5h8c2.2 0 4 1.5 4 4v2.2c0 3.8-3 6.8-6.8 6.8h-2.4C7 18.5 4 15.5 4 11.7z"/><rect x="9" y="8.5" width="6" height="4" rx="1.5"/><path d="M10.5 15.5h3"/><circle cx="6.9" cy="10.6" r=".8" fill="currentColor" stroke="none"/><circle cx="17.1" cy="10.6" r=".8" fill="currentColor" stroke="none"/></svg>Parrilla</a>
+      <a href="#temporadas" data-v="temporadas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8v4.2a4 4 0 0 1-8 0z"/><path d="M8 6H6.2a1.2 1.2 0 0 0-1.2 1.2c0 1.8 1.3 3.2 3.2 3.3M16 6h1.8A1.2 1.2 0 0 1 19 7.2c0 1.8-1.3 3.2-3.2 3.3"/><path d="M12 12.7v3.3M9 19.5h6M10 16h4v3.5h-4z"/></svg>Temporadas</a>
+      <a href="#aprende" data-v="aprende"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.6"/><path d="M12.00 10.80L12.00 7.40"/><path d="M13.14 11.63L16.37 10.58"/><path d="M12.71 12.97L14.70 15.72"/><path d="M11.29 12.97L9.30 15.72"/><path d="M10.86 11.63L7.63 10.58"/></svg>Aprende</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es" lang="es">ES</button><button type="button" data-lang="en" lang="en">EN</button></div>
+  </div>
+</header>
+
+<main id="app"><div class="loading">Encendiendo motores…</div></main>
+<div class="wrap"><footer id="foot"></footer></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script src="js/live.js"></script>
+</body>
+</html>
