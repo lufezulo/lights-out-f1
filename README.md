@@ -22,4 +22,4 @@ js/i18n.js        traducción al inglés (botón ES / EN)
 data/f1.json      historia 2018–2027 (f1db), clima histórico y estrategias
 data/tracks.json  trazados de los circuitos
 data/grid.json    parrilla, carreras de pilotos y equipos
-fonts/            Archivo y Doto
+fonts/            Doto (Archivo se carga desde Google Fonts)
