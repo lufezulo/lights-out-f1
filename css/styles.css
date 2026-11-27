@@ -624,3 +624,9 @@ footer{padding:30px 0 40px;color:var(--mute);font-size:12px;line-height:1.6}
 @keyframes btRev{to{transform:scaleX(1)}}
 @media (prefers-reduced-motion:reduce){#boot{transition:opacity .3s}#boot.bye{transform:none;opacity:0}}
 @media (prefers-reduced-motion:reduce){.bt-gantry span i:last-child{animation:none!important;background:#ff2b12}}
+
+.credit{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding:24px 0;margin-bottom:16px;border-top:1px solid var(--grid);border-bottom:1px solid var(--grid)}
+.credit span{color:var(--chalk);font-size:14px;font-weight:700}
+.credit a{color:var(--yellow);font-size:14px;font-weight:800;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
+.credit a:hover{color:var(--chalk)}
+.credit a:focus-visible{outline:2px solid var(--yellow);outline-offset:4px;border-radius:4px}
