@@ -231,6 +231,7 @@ function viewHome(){
       <h1 class="disp racedayword"><span>Race</span><span>Day</span></h1>
       <p class="circ" style="margin-top:14px"><b>GP de ${esc(name)}</b>, ${esc(c.n||"")}. Semáforo en verde a las ${hm(raceT)}, ${tzLabel()}</p>
       ${countdownHTML(raceT.getTime())}
+      ${lastSessionHTML(s,r)}
       <a class="btn" style="margin-top:22px" href="#gp-${s.year}-${r.r}">Ver pole, clima y probabilidades</a>`;
   }else if(finished){
     heroLeft=`<div class="when"><span class="pill yel"><span>Temporada ${s.year} terminada</span></span></div>
@@ -241,6 +242,7 @@ function viewHome(){
       <h1 class="disp gpname ${long?"long":""}">${esc(name)}</h1>
       <p class="circ">${esc(c.n||"")}, ${esc(c.place||"")}<br>${whenTxt(r,raceT)}</p>
       ${countdownHTML(raceT.getTime())}
+      ${st==="weekend"?lastSessionHTML(s,r):""}
       <a class="btn" style="margin-top:22px" href="#gp-${s.year}-${r.r}">Ver fin de semana</a>`;
   }
   const mq=`${s.year} GP de ${name} ${st==="raceday"?"Race day":"Race week"} `.toUpperCase();
@@ -339,6 +341,45 @@ function resultTable(rows,{grid=true,pts=true,label="Tiempo"}={}){
    ${rows.map(row=>{const [p,d,c,g,pt,gr]=row;const ch=grid&&+p&&+gr?(+gr)-(+p):null;
      return `<tr class="${+p<=3?"top3":""}"><td class="pos">${esc(p)}</td><td class="drv"><i style="background:${col(c)}"></i><b>${dlink(d,esc(drv(d).n))}</b>${ch?` <span class="${ch>0?"gain":"loss"}">${ch>0?"▲":"▼"}${Math.abs(ch)}</span>`:""}</td><td class="hide-s">${esc(con(c).n)}</td><td class="rt">${esc(gapES(g))}</td>${pts?`<td class="rt">${pt||""}</td>`:""}</tr>`}).join("")}</tbody></table>`;
 }
+/* ---- prácticas y sesiones del fin de semana (datos de OpenF1) ---- */
+const FP_ORDER=["fp1","fp2","fp3","sq"];
+function sesDone(r){
+  const L=[];
+  (r.ses||[]).forEach(([k,iso])=>{
+    if(r.fp&&r.fp[k]&&r.fp[k].length) L.push({k,t:Date.parse(iso),rows:r.fp[k]});
+    else if(k==="quali"&&r.q&&r.q.length) L.push({k,t:Date.parse(iso),rows:r.q.map(x=>[x[0],x[1],x[2],x[3]])});
+    else if(k==="sprint"&&r.sp&&r.sp.length) L.push({k,t:Date.parse(iso),rows:r.sp.map(x=>[x[0],x[1],x[2],x[3]])});
+  });
+  return L.sort((a,b)=>a.t-b.t);
+}
+function lastSessionHTML(s,r){
+  const L=sesDone(r); if(!L.length) return "";
+  const x=L[L.length-1];
+  return `<a class="lastses" href="#gp-${s.year}-${r.r}"><span class="ls-h"><b>Última sesión: ${SES[x.k]||x.k}</b><span class="ls-go">Ver tiempos</span></span>
+    <span class="ls-rows">${x.rows.slice(0,3).map(w=>`<span class="ls-r"><span class="ls-p">${esc(w[0])}</span><i style="background:${col(w[2])}"></i><b>${esc(last(drv(w[1]).n))}</b><span class="ls-t">${esc(w[3]||"")}</span></span>`).join("")}</span></a>`;
+}
+function practiceHTML(r){
+  const have=FP_ORDER.filter(k=>r.fp&&r.fp[k]&&r.fp[k].length);
+  const planned=(r.ses||[]).filter(([k])=>FP_ORDER.includes(k));
+  if(!planned.length) return "";
+  const started=planned.some(([,iso])=>Date.parse(iso)<Date.now());
+  if(!have.length&&!started) return "";
+  const cur=have[have.length-1];
+  const body=have.length?have.map(k=>`<div class="fp-panel" data-fp="${k}" ${k===cur?"":"hidden"}>
+      <div class="fp-list">${resultTable(r.fp[k].map(x=>[x[0],x[1],x[2],x[3],0,null]),{grid:false,pts:false,label:"Mejor vuelta"})}</div>
+      ${r.fp[k].length>10?`<button class="fp-more" data-fpmore type="button">Ver todos</button>`:""}</div>`).join("")
+    :`<p class="empty">Los tiempos aparecen unos minutos después de que termine cada sesión.</p>`;
+  return `<section class="block"><div class="wrap"><div class="bhead"><h2 class="h2">Prácticas<small>Mejor vuelta de cada piloto</small></h2>
+    ${have.length>1?`<div class="ctl"><div class="seg">${have.map(k=>`<button type="button" data-fpk="${k}" class="${k===cur?"on":""}">${SES[k]}</button>`).join("")}</div></div>`:have.length?`<div class="ctl"><span class="pill dim"><span>${SES[cur]}</span></span></div>`:""}</div>
+    ${body}</div></section>`;
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-fpk]");
+  if(b){const sec=b.closest("section");sec.querySelectorAll("[data-fpk]").forEach(x=>x.classList.toggle("on",x===b));
+    sec.querySelectorAll(".fp-panel").forEach(p=>p.hidden=p.dataset.fp!==b.dataset.fpk);return}
+  const m=e.target.closest("[data-fpmore]");
+  if(m){const p=m.closest(".fp-panel");const open=p.classList.toggle("all");m.textContent=open?(LANG==="en"?"Show less":"Ver menos"):(LANG==="en"?"Show all":"Ver todos")}
+});
 function viewGP(y,rn){
   const s=season(y); const r=s&&s.races.find(x=>x.r==rn);
   if(!r) return `<section class="block"><div class="wrap">${back("#carreras",`Carreras`)}<p class="empty">No encontramos esa carrera</p></div></section>`;
@@ -362,6 +403,7 @@ function viewGP(y,rn){
       <div class="track">${trackSVG(r.circuit)}${secLabels}${specs(r)}</div>
     </div></div></section>
   ${ses?`<section class="block"><div class="wrap"><div class="bhead"><h2 class="h2">Horario<small>En tu hora local</small></h2></div><div class="sched">${ses}</div></div></section>`:""}
+  ${done(r)?"":practiceHTML(r)}
   <section class="block"><div class="wrap cols2">
     <div><div class="bhead"><h2 class="h2">Pole position<small>${r.pole?"Quién sale primero":"Todavía no hay clasificación"}</small></h2></div>${pole}${r.q&&r.q.length?`<div style="margin-top:18px">${q}</div>`:q}</div>
     <div><div class="bhead"><h2 class="h2">Clima<small>${r.wx?"Así estuvo en la carrera":"Pronóstico del fin de semana"}</small></h2></div>${pastWeatherHTML(r)||weatherHTML(r)}</div>

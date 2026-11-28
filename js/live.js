@@ -114,7 +114,8 @@ async function jolRound(year,jr,r,M,out){
 
 /* ---------- OpenF1: clima real y neumáticos ---------- */
 let OF1S=null;
-async function of1Sessions(year){if(!OF1S)OF1S=await get(`${API.of1}/sessions?year=${year}`)||[];return OF1S}
+let OF1T=0;
+async function of1Sessions(year,fresh){if(!OF1S||(fresh&&Date.now()-OF1T>10*60e3)){OF1S=await get(`${API.of1}/sessions?year=${year}`)||[];OF1T=Date.now()}return OF1S}
 function findSession(list,name,iso){if(!iso)return null;const t=Date.parse(iso);return list.find(s=>s.session_name===name&&Math.abs(Date.parse(s.date_start)-t)<6*HOUR)}
 const r1=v=>Math.round(v*10)/10;
 function wxArr(w){
@@ -148,6 +149,45 @@ async function of1Round(year,r,out){
     wx.lap=[wx.race[0],wx.race[1],wx.race[2],wx.race[3],wx.race[5],!!wet];
     out.wx=wx;
   }
+}
+
+/* ---------- OpenF1: prácticas y sesiones del fin de semana en curso ---------- */
+const OF1CODE={"Practice 1":"fp1","Practice 2":"fp2","Practice 3":"fp3","Sprint Qualifying":"sq","Sprint Shootout":"sq","Qualifying":"quali","Sprint":"sprint"};
+function lapTime(sec){if(!Number.isFinite(sec))return "";const m=Math.floor(sec/60),x=sec-m*60;return `${m}:${x.toFixed(3).padStart(6,"0")}`}
+function gapTxt(g){if(g==null||g==="")return "";if(typeof g==="number")return `+${g.toFixed(3)}`;return String(g).replace(/LAPS?/i,m=>m.toLowerCase())}
+async function of1Weekend(year,r,M,out){
+  const now=Date.now(), ses=r.ses||[]; if(!ses.length) return;
+  const first=Date.parse(ses[0][1]), race=Date.parse(r.start);
+  if(now<first||now>race+6*HOUR) return;           // solo durante el fin de semana
+  const L=await of1Sessions(year,true); if(!L.length) return;
+  const fp={...(r.fp||{})};
+  let drivers=null;
+  for(const s of L){
+    const code=OF1CODE[s.session_name]; if(!code) continue;
+    const t=Date.parse(s.date_start); if(t<first-6*HOUR||t>race+HOUR) continue;
+    if(Date.parse(s.date_end||s.date_start)+10*60e3>now) continue;   // aún no termina
+    const isFP=code.startsWith("fp")||code==="sq";
+    if(isFP&&fp[code]&&fp[code].length) continue;
+    if(code==="quali"&&r.q&&r.q.length) continue;
+    if(code==="sprint"&&(!r.sprint||(r.sp&&r.sp.length))) continue;
+    const res=await get(`${API.of1}/session_result?session_key=${s.session_key}`);
+    if(!Array.isArray(res)||!res.length) continue;
+    if(!drivers){const d=await get(`${API.of1}/drivers?session_key=${s.session_key}`)||[];drivers={};d.forEach(x=>drivers[x.driver_number]=x)}
+    const who=n=>{const x=drivers[n];if(!x)return [null,null];
+      const id=M.drv({driverId:String(x.name_acronym||n).toLowerCase(),givenName:x.first_name||"",familyName:x.last_name||"",code:x.name_acronym});
+      return [id,M.con({constructorId:slug(x.team_name||""),name:x.team_name||""},id)]};
+    const sorted=res.filter(x=>x.position!=null).sort((a,b)=>a.position-b.position).concat(res.filter(x=>x.position==null));
+    const best=x=>Array.isArray(x.duration)?[...x.duration].reverse().find(v=>v!=null):x.duration;
+    const rows=sorted.map((x,i)=>{const [d,c]=who(x.driver_number);if(!d)return null;
+      const pos=x.dsq?"DSQ":x.dns?"DNS":x.dnf?"DNF":String(x.position||i+1);
+      const val=isFP||code==="quali"?lapTime(best(x)):(i===0?lapTime(x.duration):gapTxt(Array.isArray(x.gap_to_leader)?x.gap_to_leader.at(-1):x.gap_to_leader));
+      return [pos,d,c,val,+x.points||0,null]}).filter(Boolean);
+    if(!rows.length) continue;
+    if(isFP) fp[code]=rows.map(x=>[x[0],x[1],x[2],x[3]]);
+    else if(code==="quali"){out.q=rows.map(x=>[x[0],x[1],x[2],x[3]]);out.pole=[rows[0][1],rows[0][2],rows[0][3]]}
+    else if(code==="sprint") out.sp=rows;
+  }
+  if(JSON.stringify(fp)!==JSON.stringify(r.fp||{})) out.fp=fp;
 }
 
 /* ---------- Open-Meteo: pronóstico ---------- */
@@ -237,7 +277,9 @@ async function sync(force){
     if(j){
       // cambios de horario
       if(j.time){const iso=new Date(Date.parse(j.date+"T"+j.time)).toISOString().replace(".000","");if(Math.abs(Date.parse(iso)-t)>60e3&&Math.abs(Date.parse(iso)-t)<3*DAY){out.start=iso;r.start=iso}}
-      if(t<now+3*HOUR) await jolRound(y,j,r,M,out);
+      const firstQ=Math.min(...[(r.quali&&Date.parse(r.quali))||t,...(r.ses||[]).filter(x=>x[0]==="sprint").map(x=>Date.parse(x[1]))]);
+      if(firstQ<now+HOUR) await jolRound(y,j,r,M,out);
+      if(!(r.res&&r.res.length)) await of1Weekend(y,{...r,...out},M,out);
     }
     // clima real y neumáticos de carreras recientes que aún no los tienen
     if(!r.wx&&(out.res||(r.res&&r.res.length))&&now-t<30*DAY){

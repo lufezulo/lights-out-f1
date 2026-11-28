@@ -103,6 +103,7 @@ const D={
 "Veces que terminó por delante en las sesiones en que corrieron juntos.":"Times they finished ahead in sessions where both took part.","Su carrera en F1":"F1 career","Títulos mundiales":"World titles",
 "Podios y poles":"Podiums and poles","Edad al cerrar la temporada":"Age at the end of the season","También corrieron con el equipo en 2026:":"Also raced for the team in 2026:",
 /* clima en vivo */
+"Prácticas":"Practice","Mejor vuelta de cada piloto":"Each driver's best lap","Los tiempos aparecen unos minutos después de que termine cada sesión.":"Times appear a few minutes after each session ends.","Ver tiempos":"See times","Ver todos":"Show all","Ver menos":"Show less","Clasificación":"Qualifying",
 "Despejado":"Clear","Parcialmente nublado":"Partly cloudy","Nublado":"Cloudy","Niebla":"Fog","Llovizna":"Drizzle","Nieve":"Snow","Chubascos":"Showers","Tormenta":"Thunderstorm","Variable":"Changeable",
 /* motivos de abandono */
 "Rueda":"Wheel","Motor":"Engine","Hidráulica":"Hydraulics","Frenos":"Brakes","Transmisión":"Transmission","Eléctrico":"Electrical","Caja de cambios":"Gearbox","Pinchazo":"Puncture","Accidente":"Accident",
@@ -128,6 +129,7 @@ const R=[
 [/^(\d{4}): (.+) en (.+?)( \(cambió de circuito\))?$/,m=>`${m[1]}: ${m[2]} at ${m[3]}${m[4]?" (changed circuit)":""}`],
 [/^(\d{4}): (.+), por correrse$/,m=>`${m[1]}: ${m[2]}, yet to run`],
 [/^En la clasificación: aire de (.+?) °C y pista de (.+?) °C\.$/,m=>`In qualifying: air ${m[1]} °C and track ${m[2]} °C.`],
+[/^Última sesión: (.+)$/,m=>`Latest session: ${D[m[1]]||m[1]}`],
 [/^Ronda (\d+), GP de (.+)$/,m=>`Round ${m[1]}, ${gps(m[2])}`],
 [/^Ronda (\d+) de (\d+)$/,m=>`Round ${m[1]} of ${m[2]}`],
 [/^(Duro|Medio|Blando|Intermedio|Lluvia|Sin dato): (\d+) vueltas?$/,m=>`${D[m[1]]}: ${pl(m[2],"lap","laps")}`],
