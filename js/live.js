@@ -8,7 +8,7 @@
    ========================================================= */
 (function(){
 const API={jol:"https://api.jolpi.ca/ergast/f1",of1:"https://api.openf1.org/v1",om:"https://api.open-meteo.com/v1/forecast"};
-const KEY="lightsout-live-v1";
+const KEY="lightsout-live-v2";
 const FRESH=15*60*1000;          // vuelve a consultar cada 15 minutos
 const HOUR=36e5, DAY=864e5;
 
@@ -165,7 +165,7 @@ async function of1Weekend(year,r,M,out){
   for(const s of L){
     const code=OF1CODE[s.session_name]; if(!code) continue;
     const t=Date.parse(s.date_start); if(t<first-6*HOUR||t>race+HOUR) continue;
-    if(Date.parse(s.date_end||s.date_start)+10*60e3>now) continue;   // aún no termina
+    if(Date.parse(s.date_end||s.date_start)+35*60e3>now) continue;   // OpenF1 libera los datos 30 min después de cada sesión
     const isFP=code.startsWith("fp")||code==="sq";
     if(isFP&&fp[code]&&fp[code].length) continue;
     if(code==="quali"&&r.q&&r.q.length) continue;
@@ -253,7 +253,8 @@ async function sync(force){
   const y=syncYear(); if(!y) return;
   const cache=load();
   if(cache.year===y&&cache.patch) apply(cache.patch);
-  if(!force&&cache.year===y&&Date.now()-(cache.t||0)<FRESH) return;
+  const ended=Object.values(DATA.seasons[y].races).some(r=>(r.ses||[]).some(([k,iso])=>{const e=Date.parse(iso)+(k==="race"?2.5:1.2)*HOUR+35*60e3;return e>(cache.t||0)&&e<Date.now()}));
+  if(!force&&!ended&&cache.year===y&&Date.now()-(cache.t||0)<FRESH) return;
 
   const base=DATA.seasons[y];
   const patch={schema:2,year:y,races:{}};
@@ -279,13 +280,13 @@ async function sync(force){
       if(j.time){const iso=new Date(Date.parse(j.date+"T"+j.time)).toISOString().replace(".000","");if(Math.abs(Date.parse(iso)-t)>60e3&&Math.abs(Date.parse(iso)-t)<3*DAY){out.start=iso;r.start=iso}}
       const firstQ=Math.min(...[(r.quali&&Date.parse(r.quali))||t,...(r.ses||[]).filter(x=>x[0]==="sprint").map(x=>Date.parse(x[1]))]);
       if(firstQ<now+HOUR) await jolRound(y,j,r,M,out);
-      if(!(r.res&&r.res.length)) await of1Weekend(y,{...r,...out},M,out);
     }
     // clima real y neumáticos de carreras recientes que aún no los tienen
     if(!r.wx&&(out.res||(r.res&&r.res.length))&&now-t<30*DAY){
       if(!out._num&&j&&r.res){ const jj=await get(`${API.jol}/${y}/${j.round}/results.json?limit=3`);const L=jj&&jj.MRData.RaceTable.Races[0];if(L){out._num={};L.Results.forEach(x=>out._num[x.number]=M.drv(x.Driver))} }
       await of1Round(y,r,out);
     }
+    if(!(r.res&&r.res.length)&&!out.res) await of1Weekend(y,{...r,...out},M,out);
     // pronóstico si la carrera es en los próximos 7 días
     if(!(r.res&&r.res.length)&&!out.res&&t>now-3*HOUR&&t-now<7*DAY){const f=await forecast(r);if(f)out.weather=f}
     delete out._num;
