@@ -994,8 +994,9 @@ function footer(){
   const upd=LIVE&&LIVE.updated?LIVE.updated:`Datos hasta el GP de ${s.races[lastDone(s)].name} ${s.year}`;
   const rest=LANG==="en"?"Historical results: open f1db database. Live: Jolpica-F1, OpenF1 and Open-Meteo. Layouts: open f1-circuits project. Sector drawings are approximate. Times shown in your time zone. Unofficial fan site."
     :"Resultados históricos: base abierta f1db. En vivo: Jolpica-F1, OpenF1 y Open-Meteo. Trazados: proyecto abierto f1-circuits. Los sectores del dibujo son aproximados. Horas mostradas en tu zona horaria. Sitio de fans, no oficial.";
-  const cred=`<div class="credit"><span>${LANG==="en"?"Created by Luisa Zuñiga - 2026":"Creado por Luisa Zuñiga - 2026"}</span><a href="https://luisazuniga.netlify.app" target="_blank" rel="noopener">${LANG==="en"?"Visit my page":"Visita mi página"}</a></div>`;
-  $("#foot").innerHTML=`${cred}${esc(LANG==="en"?I18N.tr(upd):upd)}. ${LIVE&&LIVE.note?esc(LIVE.note)+" ":""}${rest}`;
+  const cred=`<div class="wrap credit"><span>${LANG==="en"?"Created by Luisa Zuñiga - 2026":"Creado por Luisa Zuñiga - 2026"}</span><a href="https://luisazuniga.netlify.app" target="_blank" rel="noopener">${LANG==="en"?"Visit my page":"Visita mi página"}</a></div>`;
+  const cb=document.getElementById("credit"); if(cb) cb.innerHTML=cred;
+  $("#foot").innerHTML=`${esc(LANG==="en"?I18N.tr(upd):upd)}. ${LIVE&&LIVE.note?esc(LIVE.note)+" ":""}${rest}`;
 }
 
 /* =========================================================
